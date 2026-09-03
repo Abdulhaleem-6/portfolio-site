@@ -1,0 +1,1059 @@
+<title>Deterministic by Design</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --ground:       #F7F7F5;
+    --surface:      #FFFFFF;
+    --surface-alt:  #ECEEF0;
+    --ink:          #1A1C1E;
+    --ink-soft:     #52585D;
+    --ink-faint:    #7E858B;
+    --rule:         #D6DADE;
+    --rule-soft:    #E6E9EB;
+    --accent:       #9A570A;
+    --accent-tint:  #F5E9D8;
+    --structural:   #35566C;
+    --struct-tint:  #E3EAEF;
+    --verified:     #2B6845;
+    --verified-tint:#E1EEE6;
+    --shadow: 0 1px 1px rgba(26,28,30,.04), 0 10px 28px -20px rgba(26,28,30,.35);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:       #131518;
+      --surface:      #1A1D21;
+      --surface-alt:  #23272C;
+      --ink:          #EAE8E3;
+      --ink-soft:     #A5AAAF;
+      --ink-faint:    #7C8288;
+      --rule:         #2F353B;
+      --rule-soft:    #252A2F;
+      --accent:       #E0A24A;
+      --accent-tint:  #32281A;
+      --structural:   #8BAEC6;
+      --struct-tint:  #1E2831;
+      --verified:     #6DBB8E;
+      --verified-tint:#19271F;
+      --shadow: 0 1px 1px rgba(0,0,0,.3), 0 12px 30px -22px rgba(0,0,0,.9);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:       #131518;
+    --surface:      #1A1D21;
+    --surface-alt:  #23272C;
+    --ink:          #EAE8E3;
+    --ink-soft:     #A5AAAF;
+    --ink-faint:    #7C8288;
+    --rule:         #2F353B;
+    --rule-soft:    #252A2F;
+    --accent:       #E0A24A;
+    --accent-tint:  #32281A;
+    --structural:   #8BAEC6;
+    --struct-tint:  #1E2831;
+    --verified:     #6DBB8E;
+    --verified-tint:#19271F;
+    --shadow: 0 1px 1px rgba(0,0,0,.3), 0 12px 30px -22px rgba(0,0,0,.9);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.62;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0 24px 120px;
+  }
+  @media (min-width: 1080px) {
+    .shell { grid-template-columns: 230px minmax(0, 1fr); gap: 64px; padding: 0 40px 140px; }
+  }
+
+  /* ---------- rail ---------- */
+  .rail { display: none; }
+  @media (min-width: 1080px) {
+    .rail {
+      display: block;
+      position: sticky;
+      top: 0;
+      align-self: start;
+      max-height: 100vh;
+      overflow-y: auto;
+      padding: 56px 0 40px;
+      font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+      font-size: 11.5px;
+      line-height: 1.5;
+    }
+  }
+  .rail-title {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin: 0 0 4px;
+  }
+  .rail-sub { color: var(--ink-faint); margin: 0 0 26px; }
+  .rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .rail a {
+    display: flex;
+    gap: 9px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 4px 8px 4px 0;
+    border-left: 2px solid transparent;
+    padding-left: 10px;
+  }
+  .rail a:hover { color: var(--accent); border-left-color: var(--accent); }
+  .rail a .n { color: var(--ink-faint); }
+
+  /* ---------- masthead ---------- */
+  main { min-width: 0; padding-top: 56px; }
+  .masthead { border-bottom: 1px solid var(--rule); padding-bottom: 32px; }
+  .kicker {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
+  }
+  h1 {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    font-weight: 800;
+    font-size: clamp(38px, 6.2vw, 62px);
+    line-height: 1.02;
+    letter-spacing: -0.032em;
+    margin: 0 0 20px;
+    text-wrap: balance;
+    max-width: 15ch;
+  }
+  .standfirst {
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0 0 26px;
+  }
+  .meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 26px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+  }
+  .meta-strip b { color: var(--ink-soft); font-weight: 600; }
+
+  /* ---------- sections ---------- */
+  section { padding-top: 68px; scroll-margin-top: 24px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
+  .sec-num {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    color: var(--accent);
+    padding-top: 6px;
+  }
+  h2 {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    font-weight: 700;
+    font-size: clamp(27px, 3.4vw, 35px);
+    line-height: 1.12;
+    letter-spacing: -0.024em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 21px;
+    line-height: 1.22;
+    letter-spacing: -0.015em;
+    margin: 38px 0 10px;
+    text-wrap: balance;
+  }
+  h4 {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 26px 0 8px;
+  }
+  p { max-width: 68ch; margin: 0 0 16px; }
+  .lede { font-size: 18.5px; color: var(--ink-soft); max-width: 66ch; margin-top: 14px; }
+
+  ul, ol.body-list { max-width: 68ch; margin: 0 0 16px; padding-left: 22px; }
+  li { margin-bottom: 7px; }
+  li::marker { color: var(--ink-faint); }
+
+  a { color: var(--accent); text-underline-offset: 2px; text-decoration-thickness: 1px; }
+  a:focus-visible, .rail a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  code, .mono {
+    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    font-size: .86em;
+  }
+  p code, li code, td code {
+    background: var(--surface-alt);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+
+  /* ---------- devices ---------- */
+  .verdict {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-tint);
+    padding: 20px 24px;
+    margin: 26px 0 8px;
+    max-width: 72ch;
+  }
+  .verdict p { margin: 0; max-width: none; }
+  .verdict p + p { margin-top: 12px; }
+
+  .pitch {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+    padding: 30px 32px;
+    margin: 24px 0;
+  }
+  .pitch .name {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px;
+  }
+  .pitch .role {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 16px;
+  }
+  .pitch p { font-size: 18px; margin-bottom: 12px; }
+  .pitch p:last-child { margin-bottom: 0; }
+
+  .alt-pitch {
+    border-top: 1px solid var(--rule-soft);
+    padding-top: 16px;
+    margin-top: 20px;
+  }
+
+  /* spec sheet */
+  .spec {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+    margin: 30px 0;
+  }
+  .spec-head {
+    padding: 22px 26px 18px;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 20px;
+  }
+  .spec-head h3 { margin: 0; font-size: 23px; }
+  .spec-head .slug {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+  }
+  .spec-body { padding: 4px 26px 26px; }
+  .spec-body h4:first-child { margin-top: 22px; }
+  .spec-body p, .spec-body ul { max-width: 66ch; }
+
+  .rows { display: flex; flex-direction: column; border-top: 1px solid var(--rule-soft); margin-top: 22px; }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2px 20px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  @media (min-width: 700px) { .row { grid-template-columns: 148px minmax(0,1fr); } }
+  .row dt {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding-top: 4px;
+  }
+  .row dd { margin: 0; max-width: 62ch; }
+
+  /* diagrams */
+  pre.diagram {
+    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.62;
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    padding: 20px 22px;
+    overflow-x: auto;
+    margin: 18px 0 22px;
+    white-space: pre;
+  }
+  pre.wire {
+    background: var(--surface);
+    color: var(--ink-soft);
+  }
+
+  /* tables */
+  .table-wrap { overflow-x: auto; margin: 22px 0 26px; border: 1px solid var(--rule); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 580px; }
+  th, td {
+    text-align: left;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+    font-size: 15px;
+  }
+  th {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+    background: var(--surface-alt);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; font-size: 13px; white-space: nowrap; }
+  td.repo { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; }
+
+  .tag {
+    display: inline-block;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+  }
+  .tag.ok { background: var(--verified-tint); color: var(--verified); }
+  .tag.up { background: var(--accent-tint); color: var(--accent); }
+  .tag.st { background: var(--struct-tint); color: var(--structural); }
+
+  /* phases */
+  .phase {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px 24px;
+    padding: 20px 0;
+    border-top: 1px solid var(--rule);
+  }
+  @media (min-width: 760px) { .phase { grid-template-columns: 168px minmax(0,1fr); } }
+  .phase-label {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    color: var(--accent);
+    letter-spacing: .05em;
+    padding-top: 5px;
+  }
+  .phase-label span { display: block; color: var(--ink-faint); margin-top: 3px; letter-spacing: 0; }
+  .phase h3 { margin: 0 0 6px; font-size: 19px; }
+  .phase p, .phase ul { max-width: 64ch; margin-bottom: 8px; }
+  .phase ul { padding-left: 20px; }
+
+  .caution {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--structural);
+    background: var(--struct-tint);
+    padding: 18px 22px;
+    margin: 22px 0;
+    max-width: 72ch;
+  }
+  .caution h4 { margin-top: 0; color: var(--structural); }
+  .caution p:last-child, .caution ul:last-child { margin-bottom: 0; }
+
+  footer {
+    margin-top: 84px;
+    padding-top: 26px;
+    border-top: 1px solid var(--rule);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    line-height: 1.7;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="shell">
+
+  <nav class="rail" aria-label="Contents">
+    <p class="rail-title">Deterministic by Design</p>
+    <p class="rail-sub">Portfolio blueprint<br>Abdulhaleem Sanuth</p>
+    <ol>
+      <li><a href="#evidence"><span class="n">01</span> What the code says</a></li>
+      <li><a href="#positioning"><span class="n">02</span> Positioning</a></li>
+      <li><a href="#pitch"><span class="n">03</span> Hero pitch</a></li>
+      <li><a href="#cases"><span class="n">04</span> Case studies</a></li>
+      <li><a href="#template"><span class="n">05</span> Case-study template</a></li>
+      <li><a href="#site"><span class="n">06</span> Site architecture</a></li>
+      <li><a href="#stack"><span class="n">07</span> Build stack</a></li>
+      <li><a href="#wireframes"><span class="n">08</span> Wireframes</a></li>
+      <li><a href="#plan"><span class="n">09</span> Action plan</a></li>
+      <li><a href="#risks"><span class="n">10</span> Before you ship</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <header class="masthead">
+      <p class="kicker">Portfolio strategy · Principal review</p>
+      <h1>Deterministic by Design</h1>
+      <p class="standfirst">A positioning and build plan for abdulhaleem.dev, derived from a read of eight repositories, ~1,100 of your commits, and the CV they should be backing up.</p>
+      <div class="meta-strip">
+        <span><b>Reviewed</b> 8 repos across Codygo, Vascan, personal</span>
+        <span><b>Verdict</b> Your CV undersells you</span>
+        <span><b>Build</b> ~3 weeks part-time</span>
+      </div>
+    </header>
+
+    <!-- ===================== 01 ===================== -->
+    <section id="evidence">
+      <div class="sec-head"><span class="sec-num">01</span><h2>What the code says that the CV doesn't</h2></div>
+      <p class="lede">I read the repositories before the résumé, because the résumé is a claim and the repository is the evidence. Here is what your contribution actually looks like.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Repository</th><th>What it is</th><th>Your commits</th><th>Net lines</th><th>Standing</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="repo">Vascan-Api</td>
+              <td>Art-marketplace backend — Express/TS, MongoDB, Redis, Bull, Paystack</td>
+              <td class="num">541</td>
+              <td class="num">443 files · 34k LOC</td>
+              <td><span class="tag ok">Co-owner</span></td>
+            </tr>
+            <tr>
+              <td class="repo">invoice-sync-mono</td>
+              <td>SmartFetch — serverless document-sync platform on AWS CDK</td>
+              <td class="num">232</td>
+              <td class="num">—</td>
+              <td><span class="tag ok">#2 of 14</span></td>
+            </tr>
+            <tr>
+              <td class="repo">worknet-ai-mono</td>
+              <td>Worknet AI (new) — multi-agent chat platform, Mastra, MCP, DOM agents</td>
+              <td class="num">135</td>
+              <td class="num">+23,355 / −11,172</td>
+              <td><span class="tag ok">Core AI infra</span></td>
+            </tr>
+            <tr>
+              <td class="repo">debt-tracker-api</td>
+              <td>Group-lending backend — NestJS, Prisma, Postgres</td>
+              <td class="num">106</td>
+              <td class="num">5.1k LOC · 44 routes</td>
+              <td><span class="tag ok">Sole architect</span></td>
+            </tr>
+            <tr>
+              <td class="repo">frontend-mono <span style="color:var(--ink-faint)">(Datafy)</span></td>
+              <td>Cloud storage FinOps console — fleet manager, autoscale rules, org hierarchy</td>
+              <td class="num">29</td>
+              <td class="num">+7,110 / −6,010</td>
+              <td><span class="tag st">Feature owner</span></td>
+            </tr>
+            <tr>
+              <td class="repo">vascan-creatives</td>
+              <td>Creator dashboard — Next 15, Radix, react-pdf</td>
+              <td class="num">29</td>
+              <td class="num">+3,212 / −1,385</td>
+              <td><span class="tag st">Feature owner</span></td>
+            </tr>
+            <tr>
+              <td class="repo">worknet-frontend-mono</td>
+              <td>Worknet (old) — widget JWT auth, Mongo→BigQuery sync, Firecrawl ingest</td>
+              <td class="num">27</td>
+              <td class="num">+3,120 / −1,815</td>
+              <td><span class="tag st">Feature owner</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Three CV numbers are wrong in your disfavour</h3>
+      <ul>
+        <li><b>"49 third-party integrations"</b> — <code>server/libs/sync-sources/src/sources/</code> now holds <b>57 real provider adapters</b> plus generics and a test harness. Say 57.</li>
+        <li><b>"43 REST endpoints"</b> — Debt Tracker's controllers carry <b>44 route decorators</b>. Minor, but be right.</li>
+        <li><b>"11 distinct event types"</b> — <code>NotificationType</code> enumerates <b>12</b>.</li>
+      </ul>
+
+      <h3>And one thing you built that the CV doesn't mention at all</h3>
+      <p>SmartFetch automates MFA. An SES receipt rule drops inbound mail into S3, an S3 event fires <code>mfa-email-processor</code>, which parses envelope headers for a per-task alias of the form <code>smft_&lt;taskId&gt;@…</code>, extracts the one-time code, and hands it to the Playwright job waiting mid-login. That is a headless browser solving an emailed 2FA challenge without a human. It is the single most interesting mechanism in your codebase and it is nowhere on your résumé.</p>
+
+      <div class="verdict">
+        <p><b>The read:</b> you are not the "full-stack engineer" your CV summary opens with. Nobody hires the median of that phrase. You are an infrastructure engineer who has spent the last year on the specific problem of making language models act on real systems without lying about it — and who has four prior years of payment, caching, and queue work underneath, which is exactly why the agent work holds up.</p>
+      </div>
+    </section>
+
+    <!-- ===================== 02 ===================== -->
+    <section id="positioning">
+      <div class="sec-head"><span class="sec-num">02</span><h2>Positioning</h2></div>
+      <p class="lede">Pick the thread that runs through every repository, not the one that lists the most technologies.</p>
+
+      <h3>The thesis: determinism under non-determinism</h3>
+      <p>I looked for what your hardest commits have in common, and it is not a stack. It is a class of problem. In every codebase you were the person who took a system that could produce a different answer each time it ran and made it produce the same right answer:</p>
+
+      <ul>
+        <li><b>Worknet AI</b> — an agent claimed it had updated a field it never touched. You made the DOM executor report from a <em>final page snapshot</em> instead of from its own intentions, and surfaced sub-agent failures the model was hiding. (<code>fix(chat-server): stop the DOM executor claiming updates it did not make</code>)</li>
+        <li><b>Worknet AI</b> — clicks fired into a still-rendering DOM. You gated actions behind <code>waitForDOMQuiescence</code>: a <code>MutationObserver</code> with a 120 ms settle debounce under a 1,200 ms ceiling, plus stable <code>data-aid</code> element identity so a re-render doesn't lose the target.</li>
+        <li><b>SmartFetch</b> — 57 utility portals, each redesigning without notice, behind MFA. You made document identity content-addressable so a re-run can't double-file an invoice.</li>
+        <li><b>Vascan</b> — cache stampedes at 500 peak req. Your Redis service keeps an <code>onGoingRequestLookup</code> promise map so N concurrent misses become one database call, with pub/sub invalidation keeping every instance's L1 memory cache honest.</li>
+        <li><b>Vascan</b> — duplicate merchant settlements. Bull queues plus database-level dedup across 10 Paystack webhook types.</li>
+        <li><b>Debt Tracker</b> — a shared debt fanning into per-member child loans could half-succeed. One Prisma transaction, self-referential parent/child, no partial-split state possible.</li>
+      </ul>
+
+      <p>That is the same engineer six times. It is a genuinely differentiated position: most people building agent products right now have never had to fix a thundering herd, and most people who have fixed thundering herds are not writing token-eviction policies. You are doing both, in the same year.</p>
+
+      <h3>What to lead with, and what to bury</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Lead with</th><th>Support with</th><th>Cut from the front page</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>AI agent infrastructure: context budgets, sub-agent isolation, tool-result eviction, grounded action reporting</td>
+              <td>4 years of payments, caching, queues — the reason the agent work is production-grade</td>
+              <td>"Full-stack engineer" as an opening noun</td>
+            </tr>
+            <tr>
+              <td>AWS systems design: CDK stacks, VPC egress, Batch, EventBridge, Cognito triggers</td>
+              <td>Data-dense React (Datafy fleet manager, AG Grid, org hierarchies)</td>
+              <td>Long technology lists. Chakra UI and React Hook Form are not positioning.</td>
+            </tr>
+            <tr>
+              <td>Determinism, idempotency, failure modes — your actual signature</td>
+              <td>B.Sc. Statistics — relevant to eval and sampling, mention once</td>
+              <td>Anything you touched for fewer than 20 commits</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================== 03 ===================== -->
+    <section id="pitch">
+      <div class="sec-head"><span class="sec-num">03</span><h2>Hero pitch</h2></div>
+      <p class="lede">One primary, written to be read in four seconds and remembered in one sentence. Two alternates for LinkedIn and for a recruiter-facing CV summary.</p>
+
+      <div class="pitch">
+        <p class="name">Abdulhaleem Sanuth</p>
+        <p class="role">AI Infrastructure &amp; Distributed Systems · Lagos, remote</p>
+        <p>I build the layer where AI agents meet production systems — and I make it behave the same way twice.</p>
+        <p style="color:var(--ink-soft);font-size:17px;">At Codygo I work on agent infrastructure: context budgets that keep a long conversation inside its window, isolated sub-agent loops, and DOM automation that waits for the page instead of hoping. Before that, four years of the unglamorous half — payment settlement, cache stampedes, webhook idempotency, AWS CDK stacks that survive a redeploy. The second half is why the first half holds up.</p>
+      </div>
+
+      <div class="alt-pitch">
+        <h4>Alternate A — shorter, for a landing hero above a fold</h4>
+        <p>I make non-deterministic systems return deterministic results. Agent infrastructure and AWS platforms — currently at Codygo, previously and still the backend owner at an art marketplace serving real payments.</p>
+
+        <h4>Alternate B — CV summary, replacing your current one</h4>
+        <p>AI infrastructure engineer, 4+ years in production. I build the runtime layer under LLM agents — context management, sub-agent isolation, browser automation that doesn't flake — on top of AWS systems I design and own end to end: CDK, Lambda, Batch, EventBridge, DynamoDB. My background is payments and high-traffic backends, which is why the agent work survives contact with production.</p>
+      </div>
+
+      <div class="caution">
+        <h4>A note on the writing</h4>
+        <p>Your CV's current closing line — <i>"The layer where AI products hold up under load or don't"</i> — is the best sentence in the document and the only one with a voice. Keep that register on the site and drop the technology inventories. The proof is the case studies; the hero only has to make someone want to read one.</p>
+      </div>
+    </section>
+
+    <!-- ===================== 04 ===================== -->
+    <section id="cases">
+      <div class="sec-head"><span class="sec-num">04</span><h2>The case studies</h2></div>
+      <p class="lede">Four featured, in this order. Codygo is two separate stories, not one — the agent work and the platform work argue for different things and should not be merged into an employer summary.</p>
+
+      <!-- CASE 1 -->
+      <div class="spec">
+        <div class="spec-head">
+          <h3>01 · Teaching an agent to tell the truth</h3>
+          <span class="slug">worknet-ai-mono · /work/agent-runtime</span>
+        </div>
+        <div class="spec-body">
+          <h4>The one-line hook</h4>
+          <p>An AI agent that edits a live admin console reported success on changes it had never made. Fixing that meant rebuilding how the agent perceives, acts, and remembers.</p>
+
+          <h4>The three problems, and what you actually built</h4>
+          <ul>
+            <li><b>It lied.</b> The agent narrated its intentions as outcomes. You made the DOM executor derive its report from a post-action snapshot — a <code>finalPageStateNote</code> grounded in page, dialog, and custom-control values — and stopped it swallowing sub-agent failures. <span class="mono" style="color:var(--ink-faint)">(9 commits on this alone)</span></li>
+            <li><b>It acted too early.</b> <code>waitForDOMQuiescence</code>: a <code>MutationObserver</code> over <code>documentElement</code> resolving after 120 ms of stillness, capped at 1,200 ms so a busy page can't hang the loop; <code>waitForDoubleRaf</code> for paint; <code>ensureDataAid</code> stamping a stable 8-char identity so an element survives a re-render; <code>buildClickTransition</code> diffing URL / title / modal / focus before and after every click so "did that work" is measured, not assumed.</li>
+            <li><b>It ran out of room.</b> <code>heavyToolResultEvictor</code> — an input processor that walks the message list and collapses tool results in place by rule: snapshots and screenshots keep only the latest, <code>knowledge_search</code> content goes stale after 3 turns, results over 1,500 tokens collapse to a head. It weights any result carrying a served-file attachment as heavy regardless of its text size, because a 25-token image manifest re-serves a real image every single turn.</li>
+          </ul>
+
+          <div class="rows">
+            <div class="row"><dt>Stack</dt><dd>TypeScript, Mastra, MCP, Preact, Socket.io, AWS CDK, Vitest</dd></div>
+            <div class="row"><dt>Scope</dt><dd>135 commits, +23,355 / −11,172 across <code>dom-features</code> (12.3k LOC), <code>agent-assembly</code> (9k), <code>model-input</code> (3.7k)</dd></div>
+            <div class="row"><dt>Also yours</dt><dd><code>buildIsolatedAgentLoopTool</code> — sub-agents resolved lazily at call time, given their own model and their own knowledge tools, deliberately denied root-only capabilities</dd></div>
+            <div class="row"><dt>The artefact</dt><dd>A before/after transcript pair: the same task, agent-reports-success-falsely vs. agent-reports-what-the-page-shows</dd></div>
+          </div>
+
+          <h4>How to show it — not a screenshot</h4>
+          <p>Two devices carry this page. First, an <b>annotated action-cycle diagram</b> — the loop from tool call through quiescence gate, snapshot, transition diff, to grounded report — with your three fixes marked on the arcs they repaired. Second, a <b>context-budget visualiser</b>: a stacked bar of a real 20-turn conversation, before and after eviction, showing snapshot results collapsing to one. That is a chart nobody else's portfolio has.</p>
+
+          <pre class="diagram">  tool call
+      │
+      ▼
+  ┌─────────────────────────┐
+  │ resolve element         │  ensureDataAid() → stable w-xxxxxxxx
+  └───────────┬─────────────┘
+              ▼
+  ┌─────────────────────────┐
+  │ act (pointer / type)    │  capture ClickTransitionState BEFORE
+  └───────────┬─────────────┘
+              ▼
+  ┌─────────────────────────┐
+  │ QUIESCENCE GATE         │  ◀── fix 2: MutationObserver,
+  │ 120ms settle / 1200ms   │        120ms debounce, 1200ms cap
+  └───────────┬─────────────┘
+              ▼
+  ┌─────────────────────────┐
+  │ snapshot + transition   │  ◀── fix 1: report from the page,
+  │ diff url/title/modal    │        not from intent
+  └───────────┬─────────────┘
+              ▼
+  ┌─────────────────────────┐
+  │ append to message list  │  ◀── fix 3: heavyToolResultEvictor
+  │ evict stale tool results│        keep-latest / stale-after-3
+  └───────────┬─────────────┘
+              ▼
+      grounded report</pre>
+        </div>
+      </div>
+
+      <!-- CASE 2 -->
+      <div class="spec">
+        <div class="spec-head">
+          <h3>02 · 57 portals that don't want to be automated</h3>
+          <span class="slug">invoice-sync-mono · /work/smartfetch</span>
+        </div>
+        <div class="spec-body">
+          <h4>The one-line hook</h4>
+          <p>Utility companies don't have APIs. They have login pages, MFA emails, and redesigns nobody announces. SmartFetch fetches invoices from 57 of them on a schedule, and delivers them to systems that only accept traffic from one IP address.</p>
+
+          <h4>The four decisions worth a paragraph each</h4>
+          <ul>
+            <li><b>Plugin architecture with codegen.</b> Every provider is a directory: <code>adapter.ts</code> (Playwright), <code>meta.ts</code>, a Zod <code>schema.ts</code>, an icon. Sources are generated into typed client <em>and</em> server bundles, so adding the 58th utility never touches the platform. This is the decision that made 57 tractable.</li>
+            <li><b>Automated MFA.</b> SES receipt rule → S3 → Lambda. <code>mfa-email-processor</code> reads envelope headers (<code>received</code>, <code>x-original-to</code>, <code>delivered-to</code>) for a per-task alias, resolves the task, and stores the code for the browser job mid-login. Lead the case study with this.</li>
+            <li><b>Static egress IP as a dedicated lane.</b> Basware and friends allowlist by IP. Rather than route all VPC traffic through one address, you built an isolated path: SFTP Batch jobs on their own private subnets → dedicated NAT gateway → pre-allocated Elastic IP. Your own design doc gives the reason — <i>"sharing the fixed IP across all VPC traffic is unnecessary and would expose the IP on other outbound calls."</i> That sentence is the whole case study.</li>
+            <li><b>Multi-tenant identity without per-tenant pools.</b> <code>cognito-enhancer</code> handles pre-token generation: look up every tenant for the email, honour a requested tenant from <code>clientMetadata</code> or a pending-switch record, inject the claim. One user pool, N tenants, tenant switching without re-auth.</li>
+          </ul>
+
+          <div class="rows">
+            <div class="row"><dt>Stack</dt><dd>AWS CDK, Lambda, Batch, Fargate, EventBridge Scheduler, DynamoDB, S3, SES, Cognito, KMS, Secrets Manager, CloudFront, Playwright, Zod, Pino; React 19 + Vite + Chakra + TanStack Query + AG Grid</dd></div>
+            <div class="row"><dt>Scope</dt><dd>232 commits, second of fourteen contributors</dd></div>
+            <div class="row"><dt>Also yours</dt><dd>Tag-driven release system — any engineer spins a full isolated stack with <code>is-devops release create private-myfeature</code>; every resource stage-prefixed</dd></div>
+            <div class="row"><dt>The artefact</dt><dd>A redacted provider adapter — 40 lines showing the contract a new utility must satisfy</dd></div>
+          </div>
+
+          <h4>How to show it — not a screenshot</h4>
+          <p>An <b>infrastructure diagram you can point at in an interview</b>, and a <b>"what breaks" table</b>: for each failure mode (portal redesign, MFA timeout, duplicate invoice, IP block, cold start) name the mechanism that catches it. Engineers read that table and know immediately whether you have run something in production.</p>
+
+          <pre class="diagram">  EventBridge Scheduler ──▶ scheduler λ ──▶ Batch queue
+                                                │
+                                    ┌───────────┴───────────┐
+                                    ▼                       ▼
+                            Playwright job            SFTP job
+                            (source adapter)          (target)
+                                    │                       │
+              ┌─────────────────────┤                       │
+              ▼                     ▼                       ▼
+      portal login          content-hash ──▶ S3      sftp-egress subnet
+              │             (dedup)          +               │
+              ▼                              DynamoDB        ▼
+      MFA challenge                                   dedicated NAT GW
+              │                                              │
+              ▼                                              ▼
+    smft_&lt;taskId&gt;@… ──▶ SES ──▶ S3 ──▶ mfa-email-processor λ  Elastic IP
+                                        (code back to job)   (allowlisted)</pre>
+        </div>
+      </div>
+
+      <!-- CASE 3 -->
+      <div class="spec">
+        <div class="spec-head">
+          <h3>03 · Money that only moves once</h3>
+          <span class="slug">Vascan-Api · /work/vascan</span>
+        </div>
+        <div class="spec-body">
+          <h4>The one-line hook</h4>
+          <p>A marketplace where one cart pays several galleries, a webhook can arrive twice, and 500 concurrent requests must not become 500 database reads. Four years, 541 commits, still in production.</p>
+
+          <h4>The two mechanisms to show</h4>
+          <ul>
+            <li><b>The three-tier cache.</b> <code>getOrFallback</code> checks a process-memory L1, then Redis L2, then the database — but the part worth showing is <code>onGoingRequestLookup</code>, a promise map that collapses concurrent misses for the same key into a single in-flight fallback. A dedicated pub/sub channel invalidates L1 across every instance, because process memory is the tier that silently goes stale. Reconnect uses capped exponential backoff. This is the thundering-herd fix, and it is twelve lines of genuinely good code.</li>
+            <li><b>The settlement engine.</b> A multi-vendor cart groups line items by the organisation that owns them, resolves each organisation's Paystack subaccount, accumulates per-subaccount share and platform fee, and submits one split transaction — so each merchant is paid independently and the platform's cut is deducted once. Ten webhook event types (<code>charge.success</code>, <code>transfer.reversed</code>, <code>refund.processed</code>, subscription lifecycle) land on Bull queues with database-level dedup.</li>
+          </ul>
+
+          <div class="rows">
+            <div class="row"><dt>Stack</dt><dd>Node/Express/TypeScript, MongoDB, Redis (pub/sub), Bull + Bull Board, Paystack &amp; Flutterwave, Pulumi, Docker, Sentry, Axiom, Jest + Dockest, AJV, AccessControl</dd></div>
+            <div class="row"><dt>Scope</dt><dd>541 commits · 443 TS files · ~34k LOC · 6 queues, 57 controllers</dd></div>
+            <div class="row"><dt>Range proof</dt><dd>Pair with <code>vascan-creatives</code> (Next 15 + Radix creator dashboard, 29 commits) to show you also ship product surface</dd></div>
+            <div class="row"><dt>The artefact</dt><dd>A sequence diagram of one duplicate webhook arriving twice and settling once</dd></div>
+          </div>
+
+          <h4>How to show it — not a screenshot</h4>
+          <p>This one earns a <b>small interactive demo</b>: a button labelled "fire 500 concurrent requests", two counters — requests in, database calls out — and a toggle for the dedup layer. Off: 500 / 500. On: 500 / 1. It is thirty lines of client-side JavaScript simulating your own promise map, and it makes a caching story physical in a way no paragraph will.</p>
+        </div>
+      </div>
+
+      <!-- CASE 4 -->
+      <div class="spec">
+        <div class="spec-head">
+          <h3>04 · A debt that cannot split halfway</h3>
+          <span class="slug">debt-tracker-api · /work/debt-tracker · public repo</span>
+        </div>
+        <div class="spec-body">
+          <h4>The one-line hook</h4>
+          <p>The only backend on this site you architected alone, start to finish — and the only one whose source a reader can open. That makes it the credibility anchor for everything else.</p>
+
+          <h4>What to foreground</h4>
+          <ul>
+            <li><b>The self-referential loan model.</b> One <code>Loan</code> row relates to itself through <code>parent</code> / <code>splits</code>, so a group debt fans into per-member child loans in the same table, created inside a single Prisma transaction. No partial-split state can exist. Show the schema — it is eight lines and it explains itself.</li>
+            <li><b>Notification fan-out done properly.</b> A <code>Notification</code> holds the event; a <code>UserNotification</code> join table holds per-recipient <code>isRead</code>, keyed on <code>[userId, notificationId]</code> and indexed both ways. Twelve event types across two channels (Expo push, Postmark/Handlebars email) with per-user channel preferences. The design detail worth stating: read state belongs to the recipient, not the event.</li>
+            <li><b>The boring correctness.</b> Global exception filter, request-level validation, Supabase-backed JWT via Passport, cron-driven due-date and overdue jobs, soft deletes throughout.</li>
+          </ul>
+
+          <div class="rows">
+            <div class="row"><dt>Stack</dt><dd>NestJS, Prisma, PostgreSQL (Neon), Passport/Supabase JWT, Expo push, Postmark + Handlebars, Render</dd></div>
+            <div class="row"><dt>Scope</dt><dd>106 commits · 12 modules · 44 endpoints · 8 models · 5.1k LOC</dd></div>
+            <div class="row"><dt>The artefact</dt><dd>Live Swagger/Scalar docs, plus the Prisma schema rendered as an ER diagram</dd></div>
+          </div>
+
+          <h4>How to show it — not a screenshot</h4>
+          <p>Because this repo is public, spend the page on <b>readable code</b>. Two annotated excerpts: the split transaction, and the notification fan-out query. Link every claim to the exact file and line on GitHub. On a portfolio full of proprietary work, one page where a reader can verify you is worth more than three where they must take your word.</p>
+        </div>
+      </div>
+
+      <h3>Secondary shelf — listed, not case-studied</h3>
+      <p>Four short cards under the featured work, each two sentences and a link. They exist to show range and volume without diluting the four above.</p>
+      <ul>
+        <li><b>Serverless YouTube File Sync</b> — public repo, arm64 Graviton Lambda bundling yt-dlp and ffmpeg, SQS/DynamoDB pipeline. Your second verifiable artefact; keep it.</li>
+        <li><b>Datafy fleet console</b> — cloud storage FinOps UI: hierarchical account switcher across an AWS Organizations tree, org-level autoscale-rule views, stable row identity in virtualised grids. This is the card that proves you are not backend-only.</li>
+        <li><b>Mongo → BigQuery sync</b> (Worknet, old) — schema inferred by sampling 1,000 documents with semantic type detection, then batched to the Write API under an 8 MB packet ceiling against BigQuery's 10 MB limit, with writer-stream reuse.</li>
+        <li><b>Embeddable widget JWT auth</b> — multi-key JWKS verification for third-party sites embedding the Worknet widget, plus the integration sample other teams build against.</li>
+      </ul>
+    </section>
+
+    <!-- ===================== 05 ===================== -->
+    <section id="template">
+      <div class="sec-head"><span class="sec-num">05</span><h2>The case-study template</h2></div>
+      <p class="lede">The Bostian collection is an index of ~1,970 portfolio links rather than a pattern guide, so I read the tier that consistently gets cited from it — agney.dev, akashrajpurohit.com, adamalston.com, andy-bell.design and their neighbours. The pattern that separates the memorable ones is unvarying: <b>they narrate a problem, and the artefact is a diagram, not a screenshot.</b></p>
+
+      <p>Every case study on your site uses the same eight blocks, in the same order. Consistency is what makes a reader trust the third page after skimming the first.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Block</th><th>Length</th><th>Job</th></tr></thead>
+          <tbody>
+            <tr><td><b>Hook</b></td><td>1 sentence</td><td>The problem in plain language. No stack names.</td></tr>
+            <tr><td><b>Context</b></td><td>2 short paragraphs</td><td>What the system is, who uses it, what "working" means. Your role, stated exactly — "second of fourteen contributors", not "led".</td></tr>
+            <tr><td><b>Constraint</b></td><td>3–5 bullets</td><td>What made it hard. Constraints are the most under-used section in every portfolio; they are what make a solution look inevitable rather than lucky.</td></tr>
+            <tr><td><b>Architecture</b></td><td>1 diagram + caption</td><td>An SVG you drew. Every box a real component with its real name.</td></tr>
+            <tr><td><b>The hard part</b></td><td>400–600 words</td><td>One problem, deep. The section that gets you the interview.</td></tr>
+            <tr><td><b>Decisions &amp; trade-offs</b></td><td>3 rows</td><td>Chose X over Y because Z. Naming the rejected option is what separates an engineer from a tutorial.</td></tr>
+            <tr><td><b>Outcome</b></td><td>3–4 metrics</td><td>Honest numbers with their basis. "~65% fewer redundant DB hits (measured on the artwork listing endpoint)".</td></tr>
+            <tr><td><b>What I'd change</b></td><td>2 bullets</td><td>Non-negotiable. Senior engineers read this section first, and its absence reads as inexperience.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="caution">
+        <h4>The rule that governs every metric</h4>
+        <p>Every number on the site carries its basis in the same sentence, or it comes off. "~25% inference cost reduction" invites "measured how?" — and if the answer is a shrug in an interview, the whole page loses its credit. Numbers you can source: commit counts, adapter counts, endpoint counts, LOC, event types, the eviction thresholds, the quiescence timings. Those are unarguable, and they are more persuasive than a soft percentage anyway.</p>
+      </div>
+    </section>
+
+    <!-- ===================== 06 ===================== -->
+    <section id="site">
+      <div class="sec-head"><span class="sec-num">06</span><h2>Site architecture</h2></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Route</th><th>Purpose</th><th>Priority</th></tr></thead>
+          <tbody>
+            <tr><td class="repo">/</td><td>Hero, four featured cases, secondary shelf, short about, contact</td><td><span class="tag up">Ship first</span></td></tr>
+            <tr><td class="repo">/work/agent-runtime</td><td>Case 01 — Worknet AI agent infrastructure</td><td><span class="tag up">Ship first</span></td></tr>
+            <tr><td class="repo">/work/smartfetch</td><td>Case 02 — SmartFetch sync platform</td><td><span class="tag up">Ship first</span></td></tr>
+            <tr><td class="repo">/work/vascan</td><td>Case 03 — marketplace payments &amp; caching</td><td><span class="tag up">Ship first</span></td></tr>
+            <tr><td class="repo">/work/debt-tracker</td><td>Case 04 — public repo, code-forward</td><td><span class="tag up">Ship first</span></td></tr>
+            <tr><td class="repo">/about</td><td>The long version: Lagos, statistics degree, how you got to agent infra, what you want next</td><td><span class="tag st">Week 2</span></td></tr>
+            <tr><td class="repo">/writing</td><td>3 posts at launch, each extracted from a case study's hard part</td><td><span class="tag st">Week 2–3</span></td></tr>
+            <tr><td class="repo">/resume</td><td>HTML version + PDF download, single source of truth with the site</td><td><span class="tag st">Week 2</span></td></tr>
+            <tr><td class="repo">/stack</td><td>What you actually reach for and why. Cheap to write, disproportionately read.</td><td>Optional</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Why writing is not optional for you</h3>
+      <p>Five of your seven repositories are private and will stay private. That is the central strategic problem of this portfolio: your best work is unverifiable. Two things solve it. One, the two public repos, positioned as proof-of-craft. Two, writing — because a well-argued 1,200 words on why you evict snapshot tool-results but keep the latest one <em>is itself</em> evidence of the thinking, regardless of whether anyone can read the source. Three posts, all already drafted inside your commit messages:</p>
+      <ul>
+        <li>"Your agent is lying to you: grounding tool reports in page state"</li>
+        <li>"A token budget is a cache eviction problem" — keep-latest, stale-after-N, and why an image manifest costs more than it measures</li>
+        <li>"One NAT gateway, one job: static egress IPs without exposing your whole VPC"</li>
+      </ul>
+    </section>
+
+    <!-- ===================== 07 ===================== -->
+    <section id="stack">
+      <div class="sec-head"><span class="sec-num">07</span><h2>Build stack</h2></div>
+      <p class="lede">Boring, current, and fast — the site is not the place to demonstrate range. Your Node 24 / pnpm 10 environment already suits this exactly.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>Choice</th><th>Why this and not the alternative</th></tr></thead>
+          <tbody>
+            <tr><td>Framework</td><td>Next.js 15, App Router, TypeScript</td><td>Static-first with RSC; you already ship Next at Vascan. Astro would be marginally leaner but you'd learn a framework to build a brochure.</td></tr>
+            <tr><td>Content</td><td>MDX via <b>Content Collections</b> or <b>Velite</b></td><td>Type-safe frontmatter, Zod-validated at build. Contentlayer is unmaintained — do not reach for it.</td></tr>
+            <tr><td>Styling</td><td>Tailwind v4 + CSS custom properties for the palette</td><td>v4's CSS-first config removes the JS config file entirely. Tokens in CSS keep theming honest.</td></tr>
+            <tr><td>Code blocks</td><td><code>rehype-pretty-code</code> (Shiki)</td><td>Build-time highlighting, zero client JS, line highlighting for annotating excerpts — which your case studies depend on.</td></tr>
+            <tr><td>Diagrams</td><td>Hand-authored SVG, exported from Excalidraw</td><td>Mermaid is fine for flowcharts but your architecture diagrams need annotation and consistent styling. Inline the SVG so it inherits theme tokens.</td></tr>
+            <tr><td>Type</td><td>Two faces, self-hosted via <code>next/font</code></td><td>Avoid Inter and Space Grotesk — they are the default in every AI-generated portfolio this year and readers clock them.</td></tr>
+            <tr><td>Social cards</td><td><code>next/og</code> at the edge</td><td>Per-case-study OG images generated from frontmatter. Ten lines, and it is what a shared link looks like in a DM.</td></tr>
+            <tr><td>Hosting</td><td>Vercel + Cloudflare DNS</td><td>Given how much of your paid work is AWS, hosting on Vercel is the right call — nobody is impressed by a self-hosted blog and you'd own the pager.</td></tr>
+            <tr><td>Analytics</td><td>Vercel Analytics or Umami</td><td>Privacy-preserving, no banner, no consent modal on a personal site.</td></tr>
+            <tr><td>Checks</td><td>Lighthouse CI + <code>@axe-core/cli</code> in GH Actions</td><td>An engineer whose site fails contrast checks has told on themselves before the first paragraph.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Non-negotiables</h3>
+      <ul>
+        <li>Static export where possible; interactive demos are client islands, not a client-rendered site.</li>
+        <li>Lighthouse ≥ 95 across all four categories. This is a performance-engineer's portfolio; the site is exhibit zero.</li>
+        <li>Full keyboard navigation with visible focus, respected <code>prefers-reduced-motion</code>, honest light and dark themes.</li>
+        <li>No hero animation that delays first paint. No scroll-triggered reveals that leave text at <code>opacity: 0</code> for a crawler or a slow connection.</li>
+      </ul>
+    </section>
+
+    <!-- ===================== 08 ===================== -->
+    <section id="wireframes">
+      <div class="sec-head"><span class="sec-num">08</span><h2>Wireframes</h2></div>
+      <p class="lede">Homepage is a router: it exists to get a reader into exactly one case study. Case-study pages carry the weight.</p>
+
+      <h3>Homepage</h3>
+      <pre class="diagram wire">┌──────────────────────────────────────────────────────────────┐
+│  Abdulhaleem Sanuth              work · writing · about · CV │  sticky, thin
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  I build the layer where AI agents meet                      │  h1, ~14 words max
+│  production systems — and I make it behave                   │  NOT 100vh
+│  the same way twice.                                         │
+│                                                              │
+│  [ 2-sentence sub-hero: Codygo now, 4 yrs backend before ]    │
+│                                                              │
+│  Lagos · remote   github ↗   linkedin ↗   email              │  mono, small
+├──────────────────────────────────────────────────────────────┤
+│  SELECTED WORK                                               │  eyebrow
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ 01  Teaching an agent to tell the truth                 │  │  full-width rows,
+│  │     An AI agent reported success on changes it never    │  │  not a 3-up grid —
+│  │     made. Fixing that meant rebuilding perception.      │  │  4 items deserve
+│  │     Mastra · MCP · Playwright · 135 commits        →    │  │  room to be read
+│  └────────────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ 02  57 portals that don't want to be automated          │  │
+│  │     …                          AWS CDK · Batch · SES →  │  │
+│  └────────────────────────────────────────────────────────┘  │
+│  ┌── 03  Money that only moves once ──────────────────────┐  │
+│  ┌── 04  A debt that cannot split halfway ────────────────┐  │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│  ALSO BUILT                                                  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐         │  4 compact cards
+│  │ YT Sync  │ │ Datafy   │ │ BigQuery │ │ Widget   │         │  2 lines each
+│  │ public ↗ │ │ console  │ │ sync     │ │ JWT auth │         │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘         │
+├──────────────────────────────────────────────────────────────┤
+│  WRITING            3 latest posts, title + one line each    │
+├──────────────────────────────────────────────────────────────┤
+│  ABOUT, SHORT                                                │
+│  4 sentences + photo. Statistics at Unilag → backend →       │
+│  agent infra. What you're looking for. Link to /about.       │
+├──────────────────────────────────────────────────────────────┤
+│  Email · GitHub · LinkedIn · CV (pdf)          © 2026        │
+└──────────────────────────────────────────────────────────────┘</pre>
+
+      <p><b>What is deliberately absent:</b> a skills grid of technology logos, a percentage-based proficiency chart, a testimonials carousel, and a hero that fills the viewport. Each is common in the Bostian collection and each is a reason a senior reader closes the tab.</p>
+
+      <h3>Case-study page</h3>
+      <pre class="diagram wire">┌──────────────────────────────────────────────────────────────┐
+│  ← work                                          02 / 04     │
+├──────────────────────────────────────────────────────────────┤
+│  57 portals that don't want to be automated                  │  h1
+│  Utility companies don't have APIs. They have login pages,   │  hook, 1 sentence
+│  MFA emails, and redesigns nobody announces.                 │
+│                                                              │
+│  ROLE      Backend & infrastructure · 2 of 14 contributors   │  metadata rail —
+│  PERIOD    Oct 2025 – present                                │  honest, specific
+│  STACK     AWS CDK · Lambda · Batch · SES · Cognito · KMS    │
+│  STATUS    In production · source private                    │
+├──────────────────────────────────────────────────────────────┤
+│  CONTEXT            2 paragraphs. What it is, who uses it.   │
+├──────────────────────────────────────────────────────────────┤
+│  CONSTRAINTS                                                 │
+│   · No APIs. 57 portals, each free to redesign overnight.    │
+│   · MFA on many of them, delivered to email.                 │
+│   · Targets allowlist a single source IP.                    │
+│   · Multi-tenant: credentials never cross a tenant line.     │
+├──────────────────────────────────────────────────────────────┤
+│  ARCHITECTURE                                                │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │        annotated SVG — full width, theme-aware,        │  │  the centrepiece
+│  │        horizontally scrollable on mobile               │  │
+│  └────────────────────────────────────────────────────────┘  │
+│  Caption naming every component with its real name.          │
+├──────────────────────────────────────────────────────────────┤
+│  THE HARD PART: an inbox as an authentication channel        │  400–600 words,
+│  ┌─ code ──────────────────────────────────────────────┐     │  1–2 annotated
+│  │ const MFA_ADDRESS_PATTERN = /smft_[A-Za-z0-9._-]+@…/ │     │  excerpts,
+│  │ …                                                    │     │  lines highlighted
+│  └──────────────────────────────────────────────────────┘     │
+├──────────────────────────────────────────────────────────────┤
+│  DECISIONS                                                   │
+│  ┌───────────────┬────────────────┬───────────────────────┐  │
+│  │ Chose         │ Over           │ Because               │  │
+│  ├───────────────┼────────────────┼───────────────────────┤  │
+│  │ Dedicated NAT │ VPC-wide NAT   │ don't expose the      │  │
+│  │ + Elastic IP  │                │ allowlisted IP on     │  │
+│  │               │                │ unrelated egress      │  │
+│  │ One user pool │ pool-per-tenant│ pre-token claims      │  │
+│  │ + pre-token   │                │ scale; pools don't    │  │
+│  └───────────────┴────────────────┴───────────────────────┘  │
+├──────────────────────────────────────────────────────────────┤
+│  OUTCOME       3–4 numbers, each with its basis stated       │
+├──────────────────────────────────────────────────────────────┤
+│  WHAT I'D CHANGE          2 bullets, genuinely critical      │
+├──────────────────────────────────────────────────────────────┤
+│  ← 01 Agent runtime                    03 Vascan payments →  │  keep them reading
+└──────────────────────────────────────────────────────────────┘</pre>
+    </section>
+
+    <!-- ===================== 09 ===================== -->
+    <section id="plan">
+      <div class="sec-head"><span class="sec-num">09</span><h2>Action plan</h2></div>
+      <p class="lede">Ordered by dependency, not by comfort. The writing is the long pole and the part you will be tempted to defer — so it comes before the framework.</p>
+
+      <div class="phase">
+        <div class="phase-label">PHASE 1<span>2 evenings</span></div>
+        <div>
+          <h3>Clear the permission question</h3>
+          <p>Before you write a word about Codygo, ask your manager what you may publish. Bring specifics: architecture-level description, no source, no customer names, no live URLs. Getting a yes in writing costs one message and de-risks half the site.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-label">PHASE 2<span>4–5 evenings</span></div>
+        <div>
+          <h3>Write all four case studies in Markdown</h3>
+          <p>No framework, no design, no repository. Plain files. If a case study isn't compelling as plain text it will not be rescued by a layout.</p>
+          <ul>
+            <li>Draft the eight blocks for each. Cap the hard-part section at 600 words.</li>
+            <li>Mine your own commit messages for the narrative — <code>fix(chat-server): stop the DOM executor claiming updates it did not make</code> is already a title.</li>
+            <li>For each metric, write its basis beside it. Delete any you can't source.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-label">PHASE 3<span>2 evenings</span></div>
+        <div>
+          <h3>Draw the four diagrams</h3>
+          <p>Excalidraw, exported as SVG, styled to your palette via <code>currentColor</code> so they work in both themes. Every box a real component with its real name. This is the highest-leverage two evenings in the whole plan.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-label">PHASE 4<span>3–4 evenings</span></div>
+        <div>
+          <h3>Build the shell</h3>
+          <ul>
+            <li>Next 15 + Tailwind v4 + Content Collections; MDX pipeline with <code>rehype-pretty-code</code>.</li>
+            <li>Two layouts only: homepage and case study. Everything else reuses the case-study prose layout.</li>
+            <li>Theme tokens as CSS custom properties from the start — retrofitting dark mode is miserable.</li>
+            <li><code>next/og</code> cards, sitemap, RSS, <code>robots.txt</code>, JSON-LD <code>Person</code>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-label">PHASE 5<span>2 evenings</span></div>
+        <div>
+          <h3>Build the one interactive thing</h3>
+          <p>The thundering-herd demo on the Vascan page. One demo, done properly, beats four half-built ones. If time is short, cut this before you cut the writing.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-label">PHASE 6<span>2 evenings</span></div>
+        <div>
+          <h3>Ship, then harden</h3>
+          <ul>
+            <li>Deploy to Vercel on the real domain. Reconcile the CV against the site — 57 adapters, 44 endpoints, 12 event types.</li>
+            <li>Lighthouse CI and axe in Actions; fix what they find.</li>
+            <li>Send it to three engineers you respect and ask one question: <i>"after 30 seconds, what do you think I do?"</i> If the answer isn't close to the thesis, the hero is wrong, not the reader.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-label">PHASE 7<span>ongoing</span></div>
+        <div>
+          <h3>One post a month</h3>
+          <p>Start with the agent-grounding piece — it is the most differentiated thing you know and almost nobody is writing about it from inside a production system.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 10 ===================== -->
+    <section id="risks">
+      <div class="sec-head"><span class="sec-num">10</span><h2>Before you ship</h2></div>
+
+      <h3>Four things that could go wrong</h3>
+      <ul>
+        <li><b>Publishing employer detail you shouldn't.</b> The SmartFetch and Worknet pages describe live client systems. Keep to architecture, name no customers, quote no proprietary source beyond short illustrative fragments, and get the yes from Phase 1 first. Your own design docs are employer property too.</li>
+        <li><b>Overclaiming ownership.</b> You are second of fourteen on SmartFetch and one of several on Worknet. Say so, plainly, in the role line. A reader who discovers an inflated claim discounts everything else on the page; a reader who sees "2 of 14 contributors, owned the SFTP target and the release system" trusts the rest completely.</li>
+        <li><b>Soft metrics under scrutiny.</b> "~25% cost reduction" and "~65% fewer DB hits" need a basis or they need to go. Your countable numbers are stronger anyway.</li>
+        <li><b>Forks read as your work.</b> <code>~/Desktop/Dev/Codygo</code> also contains clones of Stagehand, browser-use and Agent-E — upstream projects you have zero commits in. Keep them off the site entirely; "studied the internals of Stagehand" is a sentence for an interview, not a portfolio card.</li>
+      </ul>
+
+      <h3>What success looks like</h3>
+      <p>A staff engineer at a company you want to work for lands on the homepage from a Hacker News comment, reads the hero, opens "Teaching an agent to tell the truth", scrolls to the hard part, and thinks: <i>this person has actually shipped an agent into production and knows exactly where it breaks.</i> Nothing else on the site matters as much as that one page landing that way.</p>
+    </section>
+
+    <footer>
+      <p>Sources: 8 local repositories read at HEAD on 2 Sep 2026 · git shortlog and per-author diffstat for contribution figures · CV as attached · emmabostian/developer-portfolios (~1,970 entries, read as an index; layout conventions drawn from its frequently-cited tier).</p>
+      <p>Line counts exclude <code>node_modules</code>, <code>dist</code> and <code>cdk.out</code>. Commit counts aggregate the multiple author identities in your git history.</p>
+    </footer>
+
+  </main>
+</div>

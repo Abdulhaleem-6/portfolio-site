@@ -1,0 +1,855 @@
+@import "tailwindcss";
+
+/* Registered tokens interpolate as inherited colors when the root theme
+   changes. Component hover transitions keep their own shorter timings. */
+@property --bg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(96.4% 0.005 250);
+}
+@property --surface {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(99.3% 0.002 250);
+}
+@property --surface-2 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(100% 0 0);
+}
+@property --inset {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(93.5% 0.007 250);
+}
+@property --fg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(21% 0.015 262);
+}
+@property --fg-2 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(45% 0.014 262);
+}
+@property --fg-3 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(51.5% 0.014 262);
+}
+@property --line {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(38% 0.02 262 / 0.2);
+}
+@property --line-soft {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(38% 0.02 262 / 0.11);
+}
+@property --line-strong {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(32% 0.025 262 / 0.3);
+}
+@property --signal {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(55% 0.19 32);
+}
+@property --signal-fg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(99% 0.002 250);
+}
+@property --tech {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(50% 0.12 234);
+}
+@property --data {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(47% 0.1 174);
+}
+@property --warn {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(50% 0.115 76);
+}
+@property --glow-a {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(55% 0.19 32 / 0.14);
+}
+@property --glow-b {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(50% 0.12 234 / 0.12);
+}
+@property --atmos-a {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(55% 0.19 32 / 0.06);
+}
+@property --atmos-b {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(50% 0.12 234 / 0.07);
+}
+@property --lower-glow-a {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(68% 0.105 174 / 0.075);
+}
+@property --lower-glow-b {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(72% 0.12 48 / 0.065);
+}
+
+/*
+ * "Engineered Precision". See DESIGN.md.
+ *
+ * Three theme states, not two: an explicit choice stamps [data-theme] on <html>,
+ * the default "system" setting stamps nothing, so the unstamped document has to
+ * resolve under prefers-color-scheme alone. Every token is declared on bare
+ * :root; the media query and [data-theme] blocks only redefine.
+ *
+ * ELEVATION. Three surface levels, and all three are used at rest:
+ *   --bg         canvas, the page ground
+ *   --surface    subdued, for grid cells and panels
+ *   --surface-2  elevated, for hover and active states
+ * Depth comes from those plus a fixed atmospheric wash and a grain overlay.
+ * Never from drop shadows; the only shadow in this file is an inset.
+ */
+
+:root {
+  /* ---- light: matte blueprint paper. Canvas is grey, panels are paper. ---- */
+  --bg: oklch(96.4% 0.005 250);
+  --surface: oklch(99.3% 0.002 250);
+  --surface-2: oklch(100% 0 0);
+  --inset: oklch(93.5% 0.007 250);
+
+  --fg: oklch(21% 0.015 262);
+  --fg-2: oklch(45% 0.014 262);
+  --fg-3: oklch(51.5% 0.014 262);
+
+  /* `--line` is the solid stroke; the mask does the fading, so it can be
+     stronger than a raw border would dare to be. */
+  --line: oklch(38% 0.02 262 / 0.2);
+  --line-soft: oklch(38% 0.02 262 / 0.11);
+  --line-strong: oklch(32% 0.025 262 / 0.3);
+
+  --signal: oklch(55% 0.19 32);
+  --signal-fg: oklch(99% 0.002 250);
+
+  --tech: oklch(50% 0.12 234);
+  --data: oklch(47% 0.1 174);
+  --warn: oklch(50% 0.115 76);
+
+  --glow-a: oklch(55% 0.19 32 / 0.14);
+  --glow-b: oklch(50% 0.12 234 / 0.12);
+  --atmos-a: oklch(55% 0.19 32 / 0.06);
+  --atmos-b: oklch(50% 0.12 234 / 0.07);
+  --lower-glow-a: oklch(68% 0.105 174 / 0.075);
+  --lower-glow-b: oklch(72% 0.12 48 / 0.065);
+
+  --inset-shadow: inset 0 1px 2px oklch(30% 0.02 262 / 0.08),
+    inset 0 0 24px oklch(30% 0.02 262 / 0.05);
+
+  --grain-opacity: 0.035;
+
+  --ease-snap: cubic-bezier(0.2, 0.85, 0.3, 1);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* ---- dark: a command centre. Layered blue-black, never a void. ---- */
+    --bg: oklch(14% 0.009 265);
+    --surface: oklch(17.6% 0.011 265);
+    --surface-2: oklch(21.5% 0.013 265);
+    --inset: oklch(11.5% 0.008 265);
+
+    --fg: oklch(96% 0.004 265);
+    --fg-2: oklch(75% 0.011 265);
+    --fg-3: oklch(63% 0.014 265);
+
+    --line: oklch(75% 0.028 265 / 0.22);
+    --line-soft: oklch(75% 0.028 265 / 0.11);
+    --line-strong: oklch(80% 0.03 265 / 0.34);
+
+    --signal: oklch(72% 0.17 42);
+    --signal-fg: oklch(14% 0.009 265);
+
+    --tech: oklch(75% 0.11 226);
+    --data: oklch(73% 0.105 174);
+    --warn: oklch(80% 0.12 85);
+
+    --glow-a: oklch(72% 0.17 42 / 0.16);
+    --glow-b: oklch(75% 0.11 226 / 0.14);
+    --atmos-a: oklch(72% 0.17 42 / 0.07);
+    --atmos-b: oklch(75% 0.11 226 / 0.08);
+    --lower-glow-a: oklch(49% 0.115 244 / 0.105);
+    --lower-glow-b: oklch(62% 0.13 47 / 0.085);
+
+    --inset-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.04),
+      inset 0 0 32px oklch(0% 0 0 / 0.45);
+
+    --grain-opacity: 0.05;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: oklch(14% 0.009 265);
+  --surface: oklch(17.6% 0.011 265);
+  --surface-2: oklch(21.5% 0.013 265);
+  --inset: oklch(11.5% 0.008 265);
+
+  --fg: oklch(96% 0.004 265);
+  --fg-2: oklch(75% 0.011 265);
+  --fg-3: oklch(63% 0.014 265);
+
+  --line: oklch(75% 0.028 265 / 0.22);
+  --line-soft: oklch(75% 0.028 265 / 0.11);
+  --line-strong: oklch(80% 0.03 265 / 0.34);
+
+  --signal: oklch(72% 0.17 42);
+  --signal-fg: oklch(14% 0.009 265);
+
+  --tech: oklch(75% 0.11 226);
+  --data: oklch(73% 0.105 174);
+  --warn: oklch(80% 0.12 85);
+
+  --glow-a: oklch(72% 0.17 42 / 0.16);
+  --glow-b: oklch(75% 0.11 226 / 0.14);
+  --atmos-a: oklch(72% 0.17 42 / 0.07);
+  --atmos-b: oklch(75% 0.11 226 / 0.08);
+  --lower-glow-a: oklch(49% 0.115 244 / 0.105);
+  --lower-glow-b: oklch(62% 0.13 47 / 0.085);
+
+  --inset-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.04),
+    inset 0 0 32px oklch(0% 0 0 / 0.45);
+
+  --grain-opacity: 0.05;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-inset: var(--inset);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-line-strong: var(--line-strong);
+  --color-signal: var(--signal);
+  --color-signal-fg: var(--signal-fg);
+  --color-tech: var(--tech);
+  --color-data: var(--data);
+  --color-warn: var(--warn);
+
+  --font-display: var(--font-archivo), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius: 0px;
+}
+
+@layer base {
+  * {
+    border-radius: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--bg);
+    transition:
+      --bg 300ms var(--ease-snap),
+      --surface 300ms var(--ease-snap),
+      --surface-2 300ms var(--ease-snap),
+      --inset 300ms var(--ease-snap),
+      --fg 300ms var(--ease-snap),
+      --fg-2 300ms var(--ease-snap),
+      --fg-3 300ms var(--ease-snap),
+      --line 300ms var(--ease-snap),
+      --line-soft 300ms var(--ease-snap),
+      --line-strong 300ms var(--ease-snap),
+      --signal 300ms var(--ease-snap),
+      --signal-fg 300ms var(--ease-snap),
+      --tech 300ms var(--ease-snap),
+      --data 300ms var(--ease-snap),
+      --warn 300ms var(--ease-snap),
+      --glow-a 300ms var(--ease-snap),
+      --glow-b 300ms var(--ease-snap),
+      --atmos-a 300ms var(--ease-snap),
+      --atmos-b 300ms var(--ease-snap),
+      --lower-glow-a 300ms var(--ease-snap),
+      --lower-glow-b 300ms var(--ease-snap);
+  }
+
+  body {
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: 1.68;
+    letter-spacing: -0.011em;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    overflow-wrap: break-word;
+
+    /* Atmosphere: two diffuse washes, viewport-anchored. Large radii and low
+       alpha, so there is depth without banding. */
+    background-color: transparent;
+    background-image:
+      radial-gradient(75rem 45rem at 8% -12%, var(--atmos-a), transparent 62%),
+      radial-gradient(65rem 42rem at 95% 4%, var(--atmos-b), transparent 62%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+
+  body,
+  main,
+  header,
+  footer,
+  .frame {
+    transition-property: color, background-color, border-color;
+    transition-duration: 300ms;
+    transition-timing-function: var(--ease-snap);
+  }
+
+  /* Matte grain over everything, including type. Fixed and inert. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  ::selection {
+    background: var(--signal);
+    color: var(--signal-fg);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* ------------------------------------------------------------- structure */
+
+  /*
+   * Section rule, drawn as a masked pseudo-element rather than a border, so the
+   * line fades toward the viewport edges instead of stopping dead against them.
+   * That single change is what stops the grid reading as a spreadsheet.
+   *
+   * `position: relative` sits in the components layer, so the `sticky` utility
+   * on the header still wins and the header still sticks.
+   */
+  .rule {
+    position: relative;
+  }
+  .rule::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--line);
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 14%,
+      #000 86%,
+      transparent
+    );
+    mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+  }
+
+  /*
+   * The vertical rails stay continuous across sections, so they are borders
+   * rather than masked pseudo-elements: a per-section mask would chop them into
+   * fading segments at every boundary. They sit at the softer alpha instead.
+   */
+  .frame {
+    max-width: 1440px;
+    margin-inline: auto;
+    border-inline: 1px solid var(--line-soft);
+  }
+
+  .pad {
+    padding-inline: 20px;
+  }
+  @media (min-width: 768px) {
+    .pad {
+      padding-inline: 40px;
+    }
+  }
+
+  /* Localised hero wash, stronger than the page atmosphere. */
+  .hero-glow {
+    isolation: isolate;
+  }
+  .hero-glow::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(48rem 26rem at 22% 0%, var(--glow-a), transparent 68%),
+      radial-gradient(40rem 24rem at 82% 12%, var(--glow-b), transparent 68%);
+  }
+
+  /* A document-positioned wash for the lower homepage. Its oversized field
+     reaches upward into Writing and downward into the footer without changing
+     either section's box or introducing a viewport-fixed effect. */
+  .lower-glow {
+    isolation: isolate;
+  }
+  .lower-glow::before {
+    content: "";
+    position: absolute;
+    inset: -58rem 0 -34rem;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(64rem 44rem at 12% 34%, var(--lower-glow-a), transparent 70%),
+      radial-gradient(58rem 42rem at 88% 78%, var(--lower-glow-b), transparent 72%);
+  }
+
+  /* ------------------------------------------------------------- surfaces */
+
+  /* Subdued: grid cells and panels at rest. */
+  .surface {
+    background-color: var(--surface);
+  }
+
+  /* Elevated: the level a row rises to on hover. */
+  .surface-2 {
+    background-color: var(--surface-2);
+  }
+
+  .route-transition {
+    will-change: opacity, transform;
+  }
+
+  /*
+   * Embedded editor window: a recessed well, darker than the canvas, with an
+   * inner shadow and a stronger border. Inset, never a drop shadow.
+   */
+  .inset-panel {
+    background-color: var(--inset);
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--inset-shadow);
+  }
+
+  /* --------------------------------------------------------------- type */
+
+  .mono {
+    font-family: var(--font-mono);
+    font-feature-settings: "ss01";
+  }
+
+  /* Tertiary tier: metadata. Quiet by design, still AA against the canvas. */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+    line-height: 1.4;
+  }
+
+  .label-signal {
+    color: var(--signal);
+  }
+  .label-tech {
+    color: var(--tech);
+  }
+  .label-warn {
+    color: var(--warn);
+  }
+
+  .display-xl {
+    font-size: clamp(36px, 8.4vw, 124px);
+    line-height: 0.86;
+    letter-spacing: -0.055em;
+    font-weight: 900;
+  }
+  .display-l {
+    font-size: clamp(34px, 5.6vw, 78px);
+    line-height: 0.92;
+    letter-spacing: -0.05em;
+    font-weight: 900;
+  }
+  .display-m {
+    font-size: clamp(26px, 3.2vw, 42px);
+    line-height: 1;
+    letter-spacing: -0.042em;
+    font-weight: 800;
+  }
+  .display-s {
+    font-size: clamp(20px, 2vw, 26px);
+    line-height: 1.1;
+    letter-spacing: -0.032em;
+    font-weight: 800;
+  }
+
+  .numeral {
+    font-family: var(--font-mono);
+    font-size: clamp(38px, 6vw, 92px);
+    line-height: 0.8;
+    letter-spacing: -0.06em;
+    color: var(--line-strong);
+    font-variant-numeric: tabular-nums;
+    transition: color 0.12s var(--ease-snap);
+  }
+
+  /* Secondary tier: descriptions and body copy. */
+  .longform {
+    color: var(--fg-2);
+    font-size: 17.5px;
+    line-height: 1.78;
+    letter-spacing: -0.012em;
+  }
+  .longform p {
+    max-width: 70ch;
+    margin-bottom: 1.3rem;
+  }
+  .longform strong {
+    font-weight: 700;
+    color: var(--fg);
+  }
+  .longform em {
+    font-style: italic;
+  }
+  .longform code {
+    font-family: var(--font-mono);
+    font-size: 0.84em;
+    letter-spacing: 0;
+    color: var(--tech);
+    background: color-mix(in oklch, var(--tech) 12%, transparent);
+    padding: 0.1em 0.36em;
+    white-space: nowrap;
+  }
+
+  .spec-row {
+    display: grid;
+    gap: 4px 32px;
+    padding-block: 18px;
+    border-top: 1px solid var(--line-soft);
+  }
+  @media (min-width: 768px) {
+    .spec-row {
+      grid-template-columns: 190px minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
+  .stack-list {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.85;
+    letter-spacing: -0.01em;
+    color: var(--fg-2);
+  }
+
+  /* Semantic metadata, drawn as calibrated labels rather than pill tags. */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 6px;
+    border: 1px solid;
+    border-radius: 0;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-feature-settings: "ss01";
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: 0.035em;
+    white-space: nowrap;
+  }
+
+  .badge-signal {
+    color: var(--signal);
+    border-color: color-mix(in oklch, var(--signal) 25%, transparent);
+    background-color: color-mix(in oklch, var(--signal) 7%, transparent);
+  }
+  .badge-tech {
+    color: var(--tech);
+    border-color: color-mix(in oklch, var(--tech) 24%, transparent);
+    background-color: color-mix(in oklch, var(--tech) 7%, transparent);
+  }
+  .badge-data {
+    color: var(--data);
+    border-color: color-mix(in oklch, var(--data) 24%, transparent);
+    background-color: color-mix(in oklch, var(--data) 7%, transparent);
+  }
+  .badge-warn {
+    color: var(--warn);
+    border-color: color-mix(in oklch, var(--warn) 26%, transparent);
+    background-color: color-mix(in oklch, var(--warn) 8%, transparent);
+  }
+  .badge-mute {
+    color: var(--fg-2);
+    border-color: var(--line-soft);
+    background-color: color-mix(in oklch, var(--fg-3) 5%, transparent);
+  }
+
+  /* ------------------------------------------------------- interaction */
+
+  /*
+   * Tactile row. The fill is a deeply transparent wash of the accent rather
+   * than a neutral grey, so the whole cell tints together instead of only its
+   * text changing. The border picks up the same hue at the call site.
+   */
+  .row-tap {
+    transition:
+      background-color 0.12s var(--ease-snap),
+      border-color 0.12s var(--ease-snap),
+      color 0.12s var(--ease-snap);
+  }
+  .row-tap:hover {
+    background-color: color-mix(in oklch, var(--signal) 7%, transparent);
+  }
+
+  .theme-toggle {
+    overflow: hidden;
+    transform-origin: center;
+    transition:
+      border-color 0.12s var(--ease-snap),
+      color 0.12s var(--ease-snap);
+  }
+  .theme-toggle:hover {
+    background-color: color-mix(in oklch, var(--signal) 7%, transparent);
+  }
+
+  .theme-swap-stage {
+    display: grid;
+    width: 3ch;
+    place-items: center;
+    line-height: 1;
+  }
+  .theme-swap-label {
+    grid-area: 1 / 1;
+    will-change: opacity, transform;
+  }
+  .theme-swap-leave-active {
+    animation: theme-swap-leave 100ms var(--ease-snap) both;
+  }
+  .theme-swap-enter-active {
+    animation: theme-swap-enter 100ms var(--ease-snap) both;
+  }
+
+  @keyframes theme-swap-leave {
+    from {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      opacity: 0;
+      transform: translate3d(0, -2px, 0);
+    }
+  }
+
+  @keyframes theme-swap-enter {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 4px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* Rows that already sit on a subdued surface lift to the elevated one and
+     take a lighter accent wash on top. */
+  .row-tap-surface {
+    background-color: var(--surface);
+    transition:
+      background-color 0.12s var(--ease-snap),
+      border-color 0.12s var(--ease-snap),
+      color 0.12s var(--ease-snap);
+  }
+  .row-tap-surface:hover {
+    background-color: color-mix(in oklch, var(--signal) 8%, var(--surface-2));
+  }
+
+  .tap-shift {
+    transition: transform 0.12s var(--ease-snap), color 0.12s var(--ease-snap);
+  }
+  .group:hover .tap-shift {
+    transform: translate3d(2px, 0, 0);
+  }
+  .group:hover .tap-shift-far {
+    transform: translate3d(5px, 0, 0);
+  }
+
+  .ul-link {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 1px;
+    transition: background-size 0.18s var(--ease-snap), color 0.12s var(--ease-snap);
+  }
+  .ul-link:hover {
+    color: var(--signal);
+    background-size: 0% 1px;
+  }
+
+  .action {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 20px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    border: 1px solid var(--line-strong);
+    color: var(--fg);
+    background: var(--surface);
+    transition:
+      background-color 0.12s var(--ease-snap),
+      color 0.12s var(--ease-snap),
+      border-color 0.12s var(--ease-snap);
+  }
+  .action:hover {
+    background: color-mix(in oklch, var(--signal) 12%, var(--surface));
+    color: var(--signal);
+    border-color: color-mix(in oklch, var(--signal) 55%, transparent);
+  }
+
+  .action-signal {
+    background: var(--signal);
+    color: var(--signal-fg);
+    border-color: var(--signal);
+  }
+  .action-signal:hover {
+    background: color-mix(in oklch, var(--signal) 86%, black);
+    color: var(--signal-fg);
+    border-color: color-mix(in oklch, var(--signal) 86%, black);
+  }
+
+  /* -------------------------------------------------------------- scroll */
+
+  .scroll-x {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+  .scroll-x::-webkit-scrollbar {
+    height: 6px;
+  }
+  .scroll-x::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scroll-x::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+  }
+}
+
+@layer utilities {
+  /*
+   * Boot sequence. Rapid and mechanical: 340ms on a snappy out-curve, 40ms
+   * apart. Transform and opacity only, so nothing here triggers layout.
+   */
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 10px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes wipe {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .rise {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+    animation: rise 0.34s var(--ease-snap) both;
+  }
+
+  .wipe {
+    transform-origin: left;
+    transform: scaleX(0);
+    animation: wipe 0.5s var(--ease-snap) both;
+  }
+
+  .d0 { animation-delay: 0ms; }
+  .d1 { animation-delay: 40ms; }
+  .d2 { animation-delay: 80ms; }
+  .d3 { animation-delay: 120ms; }
+  .d4 { animation-delay: 160ms; }
+  .d5 { animation-delay: 200ms; }
+  .d6 { animation-delay: 240ms; }
+  .d7 { animation-delay: 280ms; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rise {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+
+    .wipe {
+      transform: none;
+      animation: none;
+    }
+  }
+}
