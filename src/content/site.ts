@@ -24,7 +24,7 @@ export const site = {
   name: "Abdulhaleem Sanuth",
   role: "AI Infrastructure & Distributed Systems",
   location: "Lagos, Nigeria · remote",
-  url: "https://abdulhaleem.dev",
+  url: "https://abdulhaleem-6.github.io/portfolio-site",
   email: "abdulhaleemsanuth@gmail.com",
   github: "https://github.com/Abdulhaleem-6",
   linkedin: "https://linkedin.com/in/abdulhaleem-sanuth",
