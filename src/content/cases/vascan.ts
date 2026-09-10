@@ -56,7 +56,7 @@ export const vascan: CaseStudy = {
     "At checkout, Vascan groups items by gallery, deducts the correct platform fee, and sends one payment request that pays every gallery its share.",
 
   hardPart: {
-    title: "Turning 500 repeated requests into one",
+    title: "Stopping a traffic spike from repeating the same work",
     paragraphs: [
       "We saved the results of expensive listing queries, but a busy listing still caused an outage when that saved data expired. Every request tried to rebuild the same result at once. I wanted to stop the duplicate work without adding a new locking system to every request.",
       "I made requests for the same missing data share the first request's work. If 500 requests arrive together, one request queries the database while the other 499 wait for its answer. Each running copy of the app performs at most one query for that item.",

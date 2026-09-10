@@ -228,9 +228,10 @@ export default async function CaseStudyPage({
                 <>
                   <p className="longform mt-10">
                     <RichText>
-                      This demo shows what happens when many people request the same missing data.
-                      Turn request sharing off to see every visitor trigger a separate database
-                      query.
+                      A traffic spike becomes dangerous when hundreds of visitors request the same
+                      listing just as its saved result expires. The simulator below sends 500
+                      requests for three items. Compare sharing repeated work with making the
+                      database repeat every lookup.
                     </RichText>
                   </p>
                   <StampedeDemo />
