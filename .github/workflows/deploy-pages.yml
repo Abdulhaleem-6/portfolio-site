@@ -34,9 +34,8 @@ jobs:
           cache: pnpm
 
       - name: Configure GitHub Pages
+        id: pages
         uses: actions/configure-pages@v5
-        with:
-          static_site_generator: next
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -46,6 +45,8 @@ jobs:
 
       - name: Build static export
         run: pnpm build
+        env:
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
